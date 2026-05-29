@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RetainPDF — 保留排版 PDF 翻译</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📄 RetainPDF 翻译服务</h1>
+      <p>上传 PDF，保留原版面布局，翻译为中文</p>
+    </header>
+
+    <section class="card">
+      <h2>⚙️ 配置</h2>
+      <div class="config-grid">
+        <div class="field">
+          <label>翻译 API Key</label>
+          <input type="password" id="apiKey" placeholder="DeepSeek API Key">
+        </div>
+        <div class="field">
+          <label>OCR API Key (MinerU/Paddle)</label>
+          <input type="password" id="ocrApiKey" placeholder="OCR Provider API Key">
+        </div>
+        <div class="field">
+          <label>模型</label>
+          <input type="text" id="model" value="deepseek-v4-flash">
+        </div>
+        <div class="field">
+          <label>Base URL</label>
+          <input type="text" id="baseUrl" value="https://api.deepseek.com/v1">
+        </div>
+        <div class="field">
+          <label>OCR Provider</label>
+          <select id="ocrProvider">
+            <option value="mineru">MinerU</option>
+            <option value="paddle">PaddleOCR</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>目标语言</label>
+          <select id="targetLang">
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>翻译模式</label>
+          <select id="mode">
+            <option value="sci">学术 (sci)</option>
+            <option value="precise">精确 (precise)</option>
+            <option value="fast">快速 (fast)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>渲染模式</label>
+          <select id="renderMode">
+            <option value="typst">Typst (推荐)</option>
+            <option value="overlay">Overlay</option>
+            <option value="auto">Auto</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>启用 OCR</label>
+          <input type="checkbox" id="ocrEnabled" checked>
+        </div>
+        <div class="field">
+          <label>输出格式</label>
+          <select id="outputFormat">
+            <option value="pdf">PDF</option>
+            <option value="markdown">Markdown</option>
+            <option value="zip">ZIP (全部)</option>
+          </select>
+        </div>
+      </div>
+      <button id="saveConfig" class="btn-secondary">💾 保存配置到本地</button>
+    </section>
+
+    <section class="card">
+      <h2>📤 上传 PDF</h2>
+      <div class="upload-zone" id="uploadZone">
+        <p>拖拽 PDF 到此处，或 <span class="link">点击选择</span></p>
+        <input type="file" id="fileInput" accept=".pdf" hidden>
+      </div>
+      <div id="uploadStatus"></div>
+    </section>
+
+    <section class="card">
+      <h2>📋 任务列表</h2>
+      <button id="refreshJobs" class="btn-secondary">🔄 刷新</button>
+      <div id="jobsList" class="jobs-list">
+        <p class="empty">暂无任务</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>📊 服务状态</h2>
+      <div id="serviceStatus">检查中...</div>
+    </section>
+  </div>
+
+  <script src="/app.js?v=2"></script>
+</body>
+</html>

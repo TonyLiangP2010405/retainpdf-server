@@ -1,0 +1,25 @@
+name: retain-pdf-server
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${SERVER_PORT:-8000}:8000"
+    volumes:
+      - retain_pdf_data:/data
+      # Optional: mount local retain-pdf source instead of cloning
+      - ./retain-pdf:/app/retain-pdf:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  retain_pdf_data:

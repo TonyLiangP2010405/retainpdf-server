@@ -1,0 +1,33 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+
+# Data (will be mounted as volume)
+data/
+*.db
+
+# Env
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Docs / misc
+*.md
+!README_SERVER.md
+
+# Original project (will be cloned in Dockerfile or mounted)
+retain-pdf/
