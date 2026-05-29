@@ -1,8 +1,8 @@
-# Yoru RetainPDF Server
+# RetainPDF 翻译
 
 深紫玻璃风格的 PDF 翻译工作台。项目把 RetainPDF 的保留排版翻译能力封装成 FastAPI 服务，并内置一个可直接使用的静态前端：上传 PDF、配置模型、查看任务进度、下载翻译结果都在同一个页面完成。
 
-![Yoru RetainPDF preview](docs/project-proof.png)
+![RetainPDF 翻译 preview](docs/project-proof.png)
 
 ## 能力概览
 

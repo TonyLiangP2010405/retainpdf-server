@@ -150,6 +150,7 @@ svg {
   font-size: 26px;
   line-height: 1.08;
   letter-spacing: 0;
+  white-space: nowrap;
 }
 
 .brand-copy small {
@@ -1119,7 +1120,7 @@ svg {
   }
 
   .brand-copy strong {
-    font-size: 20px;
+    font-size: 18px;
   }
 
   .brand-copy small,
