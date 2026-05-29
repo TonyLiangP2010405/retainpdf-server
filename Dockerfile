@@ -15,8 +15,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Install retain-pdf dependencies
 RUN pip install --no-cache-dir Pillow==10.4.0 PyMuPDF==1.26.5 pikepdf==7.2.0 requests==2.32.5 urllib3==2.5.0
 
-# Copy server code
+# Copy server code and bundled frontend
 COPY app ./app
+COPY static ./static
 
 # Create data dirs
 RUN mkdir -p /data/uploads /data/outputs /data/temp /data/logs

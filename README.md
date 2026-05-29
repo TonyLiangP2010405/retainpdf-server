@@ -1,381 +1,209 @@
-# RetainPDF Server
+# Yoru RetainPDF Server
 
-**将 RetainPDF 的 PDF 保留排版翻译能力封装为可部署的后端 API 服务。**
+深紫玻璃风格的 PDF 翻译工作台。项目把 RetainPDF 的保留排版翻译能力封装成 FastAPI 服务，并内置一个可直接使用的静态前端：上传 PDF、配置模型、查看任务进度、下载翻译结果都在同一个页面完成。
 
-原项目：[wxyhgk/retain-pdf](https://github.com/wxyhgk/retain-pdf)
+![Yoru RetainPDF preview](docs/project-proof.png)
 
-<img src="docs/project-proof.png" width="400" alt="项目截图">
+## 能力概览
 
-本 Server 剥离了桌面端 GUI 和静态前端页面，专注于提供稳定、异步、可观测的 HTTP API，使其他系统能够通过接口调用完成：
-
-- PDF 上传
-- OCR 识别（图片型/扫描版 PDF）
-- 保留版面翻译（公式、表格、段落结构）
-- 渲染输出（PDF / Markdown / ZIP）
-
----
-
-## 目录
-
-1. [快速启动](#快速启动)
-2. [环境变量](#环境变量)
-3. [API 文档](#api-文档)
-4. [任务状态说明](#任务状态说明)
-5. [下载结果说明](#下载结果说明)
-6. [Docker 部署](#docker-部署)
-7. [常见问题排查](#常见问题排查)
-8. [目录结构](#目录结构)
-
----
+| 模块 | 说明 |
+| --- | --- |
+| PDF 上传 | 支持浏览器拖拽或选择 PDF 文件，创建异步翻译任务 |
+| OCR 识别 | 可接入 MinerU / PaddleOCR，用于扫描件或图片型 PDF |
+| 翻译处理 | OpenAI-compatible 配置，默认面向 DeepSeek 接口 |
+| 版式保留 | 保留段落、表格、公式和页面结构，适合论文与技术文档 |
+| 结果导出 | 支持 PDF、Markdown、ZIP 下载 |
+| 任务队列 | SQLite 记录任务状态，前端自动轮询刷新 |
 
 ## 快速启动
 
-### 本地启动（需要 Python 3.11+）
+需要 Python 3.11+。
 
 ```bash
-# 1. 克隆本 server 和原项目
-git clone https://github.com/wxyhgk/retain-pdf.git ./retain-pdf
-cd retain_pdf_server
+git clone https://github.com/TonyLiangP2010405/retainpdf-server.git
+cd retainpdf-server
 
-# 2. 安装依赖
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 
-# 3. 配置环境变量
 cp .env.example .env
-# 编辑 .env，填入 TRANSLATOR_API_KEY 等
-
-# 4. 启动
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-服务启动后：
-- API 根地址：`http://localhost:8000`
-- OpenAPI 文档：`http://localhost:8000/docs`
-- 健康检查：`http://localhost:8000/health`
+启动后打开：
 
----
+| 页面 | 地址 |
+| --- | --- |
+| 前端工作台 | http://127.0.0.1:8000 |
+| OpenAPI 文档 | http://127.0.0.1:8000/docs |
+| 健康检查 | http://127.0.0.1:8000/health |
 
-### Docker 启动
+## Docker 部署
 
 ```bash
-# 1. 构建并启动
+cp .env.example .env
 docker compose up -d --build
-
-# 2. 查看日志
 docker compose logs -f server
-
-# 3. 停止
-docker compose down
 ```
 
-默认暴露端口 `8000`，上传文件、输出文件和 `jobs.db` 通过 Docker Volume `retain_pdf_data` 持久化。
+默认对外暴露 `8000` 端口，上传文件、输出文件和 `jobs.db` 会保存在 Docker volume `retain_pdf_data` 中。
 
----
+## 前端使用流程
+
+1. 打开 `http://127.0.0.1:8000`。
+2. 在右侧翻译设置中填写翻译 API Key。
+3. 选择目标语言、翻译模式、渲染模式和输出格式。
+4. 拖拽或选择 PDF 文件。
+5. 在“翻译记录”中查看任务进度，完成后下载结果。
+
+高级模型配置在页面底部的“API 接口”区域，可调整 `model`、`base_url`、`OCR Provider` 和 OCR API Key。
 
 ## 环境变量
 
 | 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `SERVER_HOST` | `0.0.0.0` | 监听地址 |
-| `SERVER_PORT` | `8000` | 监听端口 |
-| `UPLOAD_DIR` | `./data/uploads` | 上传 PDF 存储目录 |
-| `OUTPUT_DIR` | `./data/outputs` | 翻译结果输出目录 |
+| --- | --- | --- |
+| `SERVER_HOST` | `0.0.0.0` | 服务监听地址 |
+| `SERVER_PORT` | `8000` | 服务监听端口 |
+| `UPLOAD_DIR` | `./data/uploads` | 上传文件目录 |
+| `OUTPUT_DIR` | `./data/outputs` | 翻译结果目录 |
 | `TEMP_DIR` | `./data/temp` | 临时文件目录 |
-| `JOB_DB` | `./data/jobs.db` | SQLite 任务数据库路径 |
-| `RETAIN_PDF_ROOT` | `./retain-pdf` | 原 retain-pdf 项目根目录 |
+| `JOB_DB` | `./data/jobs.db` | SQLite 任务数据库 |
+| `RETAIN_PDF_ROOT` | `./retain-pdf` | 原 RetainPDF 项目目录 |
 | `TRANSLATOR_PROVIDER` | `deepseek` | 翻译服务提供商 |
-| `TRANSLATOR_API_KEY` | - | **必填**，翻译 API Key |
-| `TRANSLATOR_BASE_URL` | `https://api.deepseek.com/v1` | OpenAI-compatible 接口地址 |
-| `TRANSLATOR_MODEL` | `deepseek-chat` | 模型名称 |
+| `TRANSLATOR_API_KEY` | 空 | 翻译 API Key，生产环境必填 |
+| `TRANSLATOR_BASE_URL` | `https://api.deepseek.com/v1` | OpenAI-compatible Base URL |
+| `TRANSLATOR_MODEL` | `deepseek-chat` | 默认模型 |
 | `OCR_PROVIDER` | `mineru` | OCR 提供商 |
-| `OCR_API_KEY` | - | OCR API Key（如需） |
+| `OCR_API_KEY` | 空 | OCR API Key |
 | `OCR_ENABLED` | `true` | 是否默认启用 OCR |
-| `MAX_UPLOAD_SIZE_MB` | `200` | 单文件最大上传限制 |
+| `MAX_UPLOAD_SIZE_MB` | `200` | 单文件上传大小限制 |
 | `MAX_CONCURRENT_JOBS` | `2` | 最大并发任务数 |
-| `TRANSLATION_MODE` | `sci` | 翻译模式：`fast` / `precise` / `sci` |
-| `MATH_MODE` | `direct_typst` | 公式处理模式 |
-| `RENDER_MODE` | `typst` | 渲染模式：`auto` / `overlay` / `typst` / `dual` |
-| `PDF_COMPRESS_DPI` | `150` | 输出 PDF 图片压缩 DPI |
+| `TRANSLATION_MODE` | `sci` | `fast` / `precise` / `sci` |
+| `RENDER_MODE` | `typst` | `auto` / `overlay` / `typst` / `dual` |
 | `DEFAULT_TARGET_LANG` | `zh` | 默认目标语言 |
 | `LOG_LEVEL` | `INFO` | 日志级别 |
 
-> **注意**：不要把 `TRANSLATOR_API_KEY` 写死在代码里，始终通过 `.env` 或环境变量注入。
+不要把 API Key 写进代码仓库；使用 `.env`、环境变量或部署平台的密钥管理。
 
----
+## API 摘要
 
-## API 文档
-
-### A. 健康检查
+### 健康检查
 
 ```http
 GET /health
 ```
 
-响应：
-```json
-{
-  "status": "ok",
-  "version": "0.1.0-server",
-  "service": "retain-pdf-server"
-}
+### 获取默认配置
+
+```http
+GET /api/v1/config/default
 ```
 
----
-
-### B. 上传并创建任务
+### 创建翻译任务
 
 ```http
 POST /api/v1/jobs
 Content-Type: multipart/form-data
 ```
 
-字段：
-
 | 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| `file` | File | ✅ | PDF 文件 |
-| `source_lang` | string | | 源语言代码 |
-| `target_lang` | string | | 默认 `zh` |
-| `translator` | string | | 翻译提供商覆盖 |
-| `ocr_enabled` | boolean | | 默认 `true` |
-| `preserve_layout` | boolean | | 默认 `true` |
-| `output_format` | string | | `pdf` / `markdown` / `zip` / `all` |
-| `config` | string | | JSON 字符串，高级配置 |
-
-**curl 示例：**
+| --- | --- | --- | --- |
+| `file` | File | 是 | PDF 文件 |
+| `source_lang` | string | 否 | 源语言代码 |
+| `target_lang` | string | 否 | 默认 `zh` |
+| `translator` | string | 否 | 翻译提供商覆盖 |
+| `ocr_enabled` | boolean | 否 | 默认 `true` |
+| `preserve_layout` | boolean | 否 | 默认 `true` |
+| `output_format` | string | 否 | `pdf` / `markdown` / `zip` / `all` |
+| `config` | string | 否 | JSON 字符串，高级配置 |
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/jobs \
+curl -X POST http://127.0.0.1:8000/api/v1/jobs \
   -F "file=@example.pdf" \
   -F "target_lang=zh" \
   -F "ocr_enabled=true" \
   -F "output_format=pdf"
 ```
 
-响应：
-```json
-{
-  "job_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "status": "queued",
-  "message": "job created"
-}
-```
-
----
-
-### C. 查询任务状态
+### 查询任务
 
 ```http
 GET /api/v1/jobs/{job_id}
+GET /api/v1/jobs?limit=50
 ```
 
-**curl 示例：**
-
-```bash
-curl http://localhost:8000/api/v1/jobs/a1b2c3d4-e5f6-7890-abcd-ef1234567890
-```
-
-响应：
-```json
-{
-  "job_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "status": "running",
-  "progress": 45,
-  "stage": "translate",
-  "created_at": "2026-05-23T14:00:00+00:00",
-  "updated_at": "2026-05-23T14:02:30+00:00",
-  "error": null,
-  "output_paths": null
-}
-```
-
----
-
-### D. 下载结果
+### 下载结果
 
 ```http
 GET /api/v1/jobs/{job_id}/download?format=pdf
 ```
 
-支持 `format`：`pdf`、`markdown`、`zip`、`all`
+支持 `format=pdf`、`markdown`、`zip`、`all`。
 
-**curl 示例：**
-
-```bash
-curl -L "http://localhost:8000/api/v1/jobs/a1b2c3d4-e5f6-7890-abcd-ef1234567890/download?format=pdf" \
-  -o translated.pdf
-```
-
----
-
-### E. 删除任务
+### 删除任务
 
 ```http
 DELETE /api/v1/jobs/{job_id}
 ```
 
-清理上传文件、临时文件和输出结果。
-
-**curl 示例：**
-
-```bash
-curl -X DELETE http://localhost:8000/api/v1/jobs/a1b2c3d4-e5f6-7890-abcd-ef1234567890
-```
-
----
-
-### F. 获取配置模板
-
-```http
-GET /api/v1/config/default
-```
-
-返回当前服务的默认配置（OCR、翻译、渲染等默认值）。
-
----
-
-## 任务状态说明
+## 任务状态
 
 | 状态 | 含义 |
-|------|------|
-| `queued` | 已创建，等待执行（或被并发限制阻塞） |
-| `running` | 正在执行 pipeline |
-| `succeeded` | 全部完成，可以下载 |
-| `failed` | 某个阶段失败，`error` 字段包含原因 |
+| --- | --- |
+| `queued` | 已创建，等待执行 |
+| `running` | 正在执行 |
+| `succeeded` | 已完成，可以下载 |
+| `failed` | 执行失败，查看 `error` 字段 |
 | `cancelled` | 已取消 |
 
-### Pipeline 阶段（stage）
-
-| 阶段 | 说明 |
-|------|------|
+| 阶段 | 含义 |
+| --- | --- |
 | `upload` | 文件已保存 |
 | `ocr` | OCR 识别中 |
 | `translate` | 翻译中 |
 | `layout` | 排版回填中 |
 | `render` | 最终渲染中 |
-| `done` | 结束（成功或失败） |
+| `done` | 结束 |
 
----
-
-## 下载结果说明
-
-- **`format=pdf`**：下载翻译后的 PDF（保留原版面）
-- **`format=markdown`**：下载 Markdown 版本（如可用）
-- **`format=zip`**：下载完整输出包（含所有中间产物）
-- **`format=all`**：同 `zip`
-
-如果某种格式不存在，API 会返回 `404` 并提示 `Output file not found`。
-
----
-
-## Docker 部署
-
-### 生产部署
+## 本地验证
 
 ```bash
-# 1. 准备 .env
-cp .env.example .env
-nano .env
-
-# 2. 启动
-docker compose up -d
-
-# 3. 查看状态
-docker compose ps
-docker compose logs -f server
-
-# 4. 更新镜像
-docker compose pull
-docker compose up -d
+python -m compileall app
+curl -fsS http://127.0.0.1:8000/health
+curl -fsS http://127.0.0.1:8000/api/v1/config/default | python -m json.tool
 ```
 
-### 数据持久化
-
-上传文件、输出文件和 SQLite 数据库都存储在 Docker Volume `retain_pdf_data` 中，重启容器不会丢失。
-
-如果需要映射到宿主机目录：
-
-```yaml
-volumes:
-  - /host/path/to/data:/data
-```
-
----
-
-## 常见问题排查
-
-### Q1: Server 启动后 `/health` 返回错误？
-
-- 检查端口是否被占用：`lsof -i :8000`
-- 检查日志：`docker compose logs -f server`
-
-### Q2: 上传 PDF 后任务一直处于 `queued`？
-
-- 检查 `MAX_CONCURRENT_JOBS` 是否已满
-- 查看 worker 线程日志中的异常信息
-
-### Q3: OCR 阶段失败？
-
-- 确认 `RETAIN_PDF_ROOT` 指向的目录包含 `backend/scripts`
-- 确认 OCR 提供商的 API Key 已正确配置
-- 原项目依赖（如 MinerU / Paddle）是否已安装
-
-### Q4: 翻译阶段失败？
-
-- 检查 `TRANSLATOR_API_KEY` 是否有效
-- 检查 `TRANSLATOR_BASE_URL` 是否可达
-- 查看日志中的 `stderr` 输出
-
-### Q5: 没有输出文件？
-
-- 确认任务状态为 `succeeded`
-- 检查 `OUTPUT_DIR` / `jobs.db` 中记录的 `output_paths`
-- 使用 `format=zip` 下载完整包查看中间产物
-
----
+前端变更建议额外跑一次浏览器检查：桌面视口、移动视口、控制台错误、保存配置、非法文件上传提示和任务列表刷新。
 
 ## 目录结构
 
-```
-retain_pdf_server/
+```text
+.
 ├── app/
-│   ├── __init__.py
-│   ├── main.py               # FastAPI 入口
-│   ├── api/
-│   │   └── routes/
-│   │       ├── health.py     # GET /health
-│   │       ├── jobs.py       # 任务 CRUD + 下载
-│   │       └── config.py     # GET /api/v1/config/default
+│   ├── main.py
+│   ├── api/routes/
 │   ├── core/
-│   │   ├── config.py         # Pydantic Settings（.env 驱动）
-│   │   └── logging.py        # 结构化日志
 │   ├── models/
-│   │   └── __init__.py       # Pydantic 模型
 │   ├── services/
-│   │   ├── job_service.py    # SQLite Job 持久化
-│   │   └── pipeline_service.py # 原项目 pipeline 适配器
 │   └── workers/
-│       └── task_worker.py    # 后台异步任务
-├── data/                     # 运行数据（上传/输出/数据库）
+├── static/
+│   ├── index.html
+│   ├── style.css
+│   ├── app.js
+│   └── assets/
+├── docs/
+│   └── project-proof.png
 ├── Dockerfile
 ├── docker-compose.yml
 ├── requirements.txt
-├── .env.example
-└── README_SERVER.md
+└── README.md
 ```
 
----
+## 上游项目
 
-## 与原项目的关系
-
-- **保留**：OCR 归一化、翻译 pipeline、排版回填、PDF 渲染、字体控制、公式处理
-- **剥离**：Electron 桌面壳、静态浏览器前端页面、桌面端打包脚本
-- **新增**：FastAPI HTTP 接口、异步 Job 队列、SQLite 状态追踪、Docker 部署
-
-如果需要恢复前端，可以将原项目的 `frontend/` 或 `frontend-react/` 目录挂载为静态资源，或单独部署一个前端容器调用本 Server 的 API。
-
----
+本服务基于 [wxyhgk/retain-pdf](https://github.com/wxyhgk/retain-pdf) 的 PDF 翻译能力进行服务化封装。当前仓库负责 HTTP API、异步任务、静态前端、Docker 部署与运行文档。
 
 ## License
 
-与原项目一致：MIT
+MIT
