@@ -4,7 +4,7 @@
 
 原项目：[wxyhgk/retain-pdf](https://github.com/wxyhgk/retain-pdf)
 
-![项目截图](docs/project-proof.png)
+<img src="docs/project-proof.png" width="600" alt="项目截图">
 
 本 Server 剥离了桌面端 GUI 和静态前端页面，专注于提供稳定、异步、可观测的 HTTP API，使其他系统能够通过接口调用完成：
 
