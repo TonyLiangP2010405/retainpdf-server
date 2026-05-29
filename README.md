@@ -1,8 +1,36 @@
-# RetainPDF 翻译
+<p align="center">
+  <img src="static/assets/yoru-character-cutout.png" width="260" alt="RetainPDF 翻译角色">
+</p>
 
-深紫玻璃风格的 PDF 翻译工作台。项目把 RetainPDF 的保留排版翻译能力封装成 FastAPI 服务，并内置一个可直接使用的静态前端：上传 PDF、配置模型、查看任务进度、下载翻译结果都在同一个页面完成。
+<p align="center">
+  <img src="docs/readme-title.svg" width="520" alt="RetainPDF 翻译">
+</p>
 
-![RetainPDF 翻译 preview](docs/project-proof.png)
+---
+
+<p align="center">
+  <a href="http://127.0.0.1:8000"><img alt="open workbench" src="https://img.shields.io/badge/open-workbench-8f4cff?style=for-the-badge&amp;labelColor=3b315f"></a>
+  <a href="http://127.0.0.1:8000/docs"><img alt="api docs" src="https://img.shields.io/badge/api-FastAPI-48c7b8?style=for-the-badge&amp;labelColor=2d5d61"></a>
+  <a href="#docker-部署"><img alt="docker ready" src="https://img.shields.io/badge/docker-ready-cf45dc?style=for-the-badge&amp;labelColor=55305e"></a>
+  <a href="#license"><img alt="license MIT" src="https://img.shields.io/badge/license-MIT-f0b85a?style=for-the-badge&amp;labelColor=5a4a2b"></a>
+</p>
+
+<p align="center">
+  <strong>RetainPDF 翻译</strong> 是一个在浏览器中运行的 PDF 保留排版翻译工作台。
+</p>
+
+<p align="center">
+  它将 <a href="https://github.com/wxyhgk/retain-pdf">RetainPDF</a> 的 OCR、翻译和渲染能力封装成
+  <a href="https://fastapi.tiangolo.com/">FastAPI</a> 服务，并提供深紫玻璃风格的静态前端。
+</p>
+
+<p align="center">
+  上传 PDF，配置 OpenAI-compatible 模型，查看异步任务进度，然后导出高质量中文 PDF / Markdown / ZIP。
+</p>
+
+<p align="center">
+  <img src="docs/project-proof.png" width="860" alt="RetainPDF 翻译工作台截图">
+</p>
 
 ## 能力概览
 
