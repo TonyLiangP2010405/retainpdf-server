@@ -225,6 +225,7 @@ curl -fsS http://127.0.0.1:8000/api/v1/config/default | python -m json.tool
 ├── Dockerfile
 ├── docker-compose.yml
 ├── requirements.txt
+├── LICENSE
 └── README.md
 ```
 
@@ -234,4 +235,4 @@ curl -fsS http://127.0.0.1:8000/api/v1/config/default | python -m json.tool
 
 ## License
 
-MIT
+MIT. See [LICENSE](LICENSE).
